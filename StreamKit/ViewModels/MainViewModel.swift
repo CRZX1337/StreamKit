@@ -13,14 +13,11 @@ final class MainViewModel {
     var sessionState: StreamSessionState = .idle
     var userMessage: String?
 
-    init(
-        cameraManager: CameraManager = CameraManager(),
-        overlayManager: OverlayManager = OverlayManager(),
-        rtmpManager: RTMPManager = RTMPManager()
-    ) {
-        self.cameraManager = cameraManager
-        self.overlayManager = overlayManager
-        self.rtmpManager = rtmpManager
+    @MainActor
+    init() {
+        self.cameraManager = CameraManager()
+        self.overlayManager = OverlayManager()
+        self.rtmpManager = RTMPManager(config: .default)
         self.destinations = StreamPlatform.allCases.map { StreamDestination(platform: $0) }
     }
 

@@ -71,7 +71,7 @@ final class RTMPManager: ObservableObject {
         }
 
         for destination in enabledDestinations {
-            let publisher = PlatformPublisher(destination: destination, config: config)
+            let publisher = PlatformPublisher(destination: destination)
             publishers[destination.platform] = publisher
             cameraManager.addSampleBufferConsumer(publisher)
 
@@ -79,6 +79,7 @@ final class RTMPManager: ObservableObject {
             await startBitrateListener(for: publisher, platform: destination.platform)
 
             do {
+                try await publisher.configure(config: config)
                 try await publisher.connectAndPublish()
                 setOutputState(
                     for: destination.platform,
@@ -231,30 +232,28 @@ actor PlatformPublisher: CameraSampleBufferConsumer {
         }
     }
 
-    init(destination: StreamDestination, config: StreamingConfig) {
+    init(destination: StreamDestination) {
         self.destination = destination
         self.connection = RTMPConnection()
         self.stream = RTMPStream(connection: connection, fcPublishName: destination.streamKey)
-
-        do {
-            var audioSettings = stream.audioSettings
-            audioSettings.bitRate = config.audioBitrate
-            try stream.setAudioSettings(audioSettings)
-
-            var videoSettings = stream.videoSettings
-            videoSettings.bitRate = config.videoBitrate
-            videoSettings.expectedFrameRate = Float64(config.frameRate)
-            videoSettings.videoSize = config.resolution
-            try stream.setVideoSettings(videoSettings)
-        } catch {
-            AppLogger.stream.error("Failed to apply codec settings: \(error.localizedDescription)")
-        }
 
         stream.setBitRateStrategy(PlatformBitRateStrategy { [weak self] kbps in
             Task {
                 await self?.updateBitrate(kbps)
             }
         })
+    }
+
+    func configure(config: StreamingConfig) async throws {
+        var audioSettings = await stream.audioSettings
+        audioSettings.bitRate = config.audioBitrate
+        try await stream.setAudioSettings(audioSettings)
+
+        var videoSettings = await stream.videoSettings
+        videoSettings.bitRate = config.videoBitrate
+        videoSettings.expectedFrameRate = Float64(config.frameRate)
+        videoSettings.videoSize = config.resolution
+        try await stream.setVideoSettings(videoSettings)
     }
 
     func connectAndPublish() async throws {

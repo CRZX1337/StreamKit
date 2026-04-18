@@ -65,7 +65,7 @@ struct GlassControlPanel: View {
         }
         .padding(16)
         .background(.ultraThinMaterial)
-        .glassEffect()
+        .safeGlassEffect() // <-- Updated to use our safe wrapper
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
@@ -97,5 +97,17 @@ struct GlassControlPanel: View {
             return .constant(StreamDestination(platform: platform))
         }
         return $viewModel.destinations[index]
+    }
+}
+
+// MARK: - iOS 26 Compatibility Wrapper
+extension View {
+    @ViewBuilder
+    func safeGlassEffect() -> some View {
+        if #available(iOS 26.0, *) {
+            self.glassEffect()
+        } else {
+            self
+        }
     }
 }

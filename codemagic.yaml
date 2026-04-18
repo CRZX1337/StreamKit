@@ -4,21 +4,37 @@ workflows:
     max_build_duration: 30
     environment:
       xcode: latest
-      cocoapods: default
     scripts:
       - name: Resolve Swift Package dependencies
         script: |
           xcodebuild -resolvePackageDependencies \
             -project StreamKit.xcodeproj \
             -scheme StreamKit
-      - name: Build iOS app (no signing)
+            
+      - name: Build iOS app (Unsigned for Sideloading)
         script: |
-          xcodebuild \
+          xcodebuild build \
             -project StreamKit.xcodeproj \
             -scheme StreamKit \
-            -destination "generic/platform=iOS Simulator" \
-            -configuration Debug \
+            -destination "generic/platform=iOS" \
+            -configuration Release \
             CODE_SIGNING_ALLOWED=NO \
-            clean build
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CONFIGURATION_BUILD_DIR="$CM_BUILD_DIR/build/Release-iphoneos"
+            
+      - name: Package into Unsigned IPA
+        script: |
+          # Create the Payload directory required for an IPA
+          mkdir -p build/Payload
+          
+          # Copy the built .app file into the Payload directory
+          cp -r build/Release-iphoneos/StreamKit.app build/Payload/
+          
+          # Zip the Payload directory into an .ipa file
+          cd build
+          zip -qr StreamKit-unsigned.ipa Payload
+          
     artifacts:
+      - build/StreamKit-unsigned.ipa
       - /tmp/xcodebuild_logs/*.log

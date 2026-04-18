@@ -28,8 +28,8 @@ workflows:
           # Create the Payload directory required for an IPA
           mkdir -p build/Payload
           
-          # Copy the built .app file into the Payload directory
-          cp -r build/Release-iphoneos/StreamKit.app build/Payload/
+          # Use 'cp -a' instead of 'cp -r' to preserve Framework symlinks!
+          cp -a build/Release-iphoneos/StreamKit.app build/Payload/
           
           # Zip the Payload directory into an .ipa file
           cd build

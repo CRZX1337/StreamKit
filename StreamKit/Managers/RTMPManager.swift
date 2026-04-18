@@ -232,16 +232,18 @@ actor PlatformPublisher: CameraSampleBufferConsumer {
         }
     }
 
-    init(destination: StreamDestination) {
+init(destination: StreamDestination) {
         self.destination = destination
         self.connection = RTMPConnection()
         self.stream = RTMPStream(connection: connection, fcPublishName: destination.streamKey)
 
-        stream.setBitRateStrategy(PlatformBitRateStrategy { [weak self] kbps in
-            Task {
-                await self?.updateBitrate(kbps)
-            }
-        })
+        Task {
+            await stream.setBitRateStrategy(PlatformBitRateStrategy { [weak self] kbps in
+                Task {
+                    await self?.updateBitrate(kbps)
+                }
+            })
+        }
     }
 
     func configure(config: StreamingConfig) async throws {

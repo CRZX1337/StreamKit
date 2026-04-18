@@ -11,28 +11,29 @@ workflows:
             -project StreamKit.xcodeproj \
             -scheme StreamKit
             
-      - name: Build iOS app (Unsigned for Sideloading)
+      - name: Archive iOS app (Unsigned for Sideloading)
         script: |
-          xcodebuild build \
+          xcodebuild archive \
             -project StreamKit.xcodeproj \
             -scheme StreamKit \
             -destination "generic/platform=iOS" \
             -configuration Release \
+            -archivePath "$PWD/build/StreamKit.xcarchive" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            CONFIGURATION_BUILD_DIR="$CM_BUILD_DIR/build/Release-iphoneos"
+            ENTITLEMENTS_REQUIRED=NO
             
       - name: Package into Unsigned IPA
         script: |
-          # Create the Payload directory required for an IPA
-          mkdir -p build/Payload
+          # Create Payload directory
+          mkdir -p "$PWD/build/Payload"
           
-          # Use 'cp -a' instead of 'cp -r' to preserve Framework symlinks!
-          cp -a build/Release-iphoneos/StreamKit.app build/Payload/
+          # Copy the perfectly assembled .app from the xcarchive
+          cp -a "$PWD/build/StreamKit.xcarchive/Products/Applications/StreamKit.app" "$PWD/build/Payload/"
           
-          # Zip the Payload directory into an .ipa file
-          cd build
+          # Zip into an IPA
+          cd "$PWD/build"
           zip -qr StreamKit-unsigned.ipa Payload
           
     artifacts:

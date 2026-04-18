@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct GlassControlPanel: View {
     @Bindable var viewModel: MainViewModel
 

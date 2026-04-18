@@ -1,0 +1,13 @@
+---
+description: 
+alwaysApply: true
+---
+
+You are an expert iOS Swift developer.
+- Always use SwiftUI for UI, AVFoundation for camera
+- Use HaishinKit for RTMP streaming
+- Target iOS 17+, use async/await, not callbacks
+- Use .glassEffect() and .ultraThinMaterial for all UI surfaces (Liquid Glass)
+- WKWebView overlays must always set preferredFramesPerSecond = 60
+- Never use UIKit unless absolutely necessary
+- Use MVVM architecture

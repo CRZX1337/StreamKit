@@ -218,7 +218,9 @@ actor PlatformPublisher: CameraSampleBufferConsumer {
 
     private(set) var currentBitrateKbps: Int = 0
     private var isPublishing = false
-    private var continuation: AsyncStream<Int>.Continuation?
+    
+    let bitrateStream: AsyncStream<Int>
+    private let continuation: AsyncStream<Int>.Continuation
 
     var statusStream: AsyncStream<RTMPStatus> {
         get async {
@@ -226,16 +228,15 @@ actor PlatformPublisher: CameraSampleBufferConsumer {
         }
     }
 
-    var bitrateStream: AsyncStream<Int> {
-        AsyncStream { continuation in
-            self.continuation = continuation
-        }
-    }
-
-init(destination: StreamDestination) {
+    init(destination: StreamDestination) {
         self.destination = destination
         self.connection = RTMPConnection()
         self.stream = RTMPStream(connection: connection, fcPublishName: destination.streamKey)
+
+        // Make the stream in a concurrency-safe way for Swift 6
+        let (asyncStream, streamContinuation) = AsyncStream<Int>.makeStream()
+        self.bitrateStream = asyncStream
+        self.continuation = streamContinuation
 
         Task {
             await stream.setBitRateStrategy(PlatformBitRateStrategy { [weak self] kbps in
@@ -287,7 +288,7 @@ init(destination: StreamDestination) {
 
     private func updateBitrate(_ kbps: Int) {
         currentBitrateKbps = kbps
-        continuation?.yield(kbps)
+        continuation.yield(kbps)
     }
 }
 
